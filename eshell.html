@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-01-22 Do. 19:34 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Writing pipeline commands in Eshell</title>
+<meta name="author" content="Jörg Kollmann" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="/chrome/rethink.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<img src="/chrome/image1.jpg"/><div style="padding:2vh"><a style="font-weight:900; text-decoration:none" href="/">Home</a><span style="float: right">last changed: 2026-01-12</span></div>
+</div>
+<div id="content" class="content">
+<h1 class="title">Writing pipeline commands in Eshell</h1>
+
+<div id="outline-container-orgd9e9f29" class="outline-2">
+<h2 id="orgd9e9f29">Experimenting with Eshell</h2>
+<div class="outline-text-2" id="text-orgd9e9f29">
+<p>
+Over the holydays I finally took some time experimenting
+with <code>eshell</code>, an interesting shell implementation for emacs.
+What I love most is having shell commands and lisp code together in
+one place. That can be a real game-changer.
+Instead of calling <code>ielm</code>, just use eshell for
+defining and calling lisp functions. And then using them in
+combination with shell commands and pipelines.
+</p>
+
+<p>
+For example, just being able to call
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ dired .
+</pre>
+</div>
+<p>
+(unfortunately, the path argument is not optional)
+or just
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ magit
+</pre>
+</div>
+<p>
+in the
+current directory is really convenient. In fact, I'm using <code>dired</code>
+so frequently that I've defined a shortcut:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">eshell/els</span> (<span class="org-type">&amp;optional</span> arg)
+  (dired
+   (<span class="org-keyword">if</span> (null arg) <span class="org-string">"."</span> arg)))
+</pre>
+</div>
+<p>
+After using this, <code>q</code> brings you back to the eshell buffer.
+</p>
+
+<p>
+Eshell has some unusual redirection functions for stdout,
+like sending it to a buffer (<code>ls &gt; #&lt;buffer name&gt;</code>) or to the emacs
+kill ring (<code>ls &gt; /dev/kill</code>).
+An example, filtering the contents of the current directory and sending
+the output to a buffer. Then, setting that buffer to dired-virtual
+mode and displaying it:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ ls -l | grep org &gt; <span class="org-comment-delimiter">#</span><span class="org-comment">&lt;buffer orgs&gt;
+</span>$ (with-current-buffer (get-buffer <span class="org-string">"orgs"</span>) (dired-virtual (eshell/pwd)))
+$ switch-to-buffer <span class="org-comment-delimiter">#</span><span class="org-comment">&lt;buffer orgs&gt;</span>
+</pre>
+</div>
+<p>
+And instead of calling <code>emacsclient my-file</code>, you can use the emacs
+command <code>find-file my-file</code> (or like <code>find-file-other-window</code>).
+</p>
+
+<p>
+What I also like is being able to directly use all editing features in
+the eshell buffer, or in other buffers. I'm trying to get to a workflow
+having shorter command outputs directly in the shell output while sending
+longer outputs to dedicated buffers.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6ee0c68" class="outline-2">
+<h2 id="org6ee0c68">Writing pipeline commands for Eshell</h2>
+<div class="outline-text-2" id="text-org6ee0c68">
+<p>
+For this, I want to have a function sending output to a buffer and setting that
+buffer to <code>view-mode</code>.
+However, writing a lisp function to handle stdin and stdout in eshell
+doesn't seem straightforward.
+Instead I first tried to implement a virtual device for eshell.
+Virtual devices are also targets for redirection, looking like a
+system device (say <code>/dev/null</code>) but only visible for eshell. Examples
+for virtual targets are <code>/dev/kill</code> and <code>/dev/clip</code>, which can be used
+to send shell output to clipboard and kill ring.
+</p>
+
+<p>
+This kind of device is declared by means of customization, like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(custom-set-variables
+ '(eshell-virtual-targets
+   '((<span class="org-string">"/dev/view"</span> my-eshell-to-view-buffer t))))
+</pre>
+</div>
+<p>
+Now, on each redirection to <code>/dev/view</code>, eshell will call the lisp
+function given here. It receives an argument giving the mode
+(overwrite or append) and produces a lambda function, which will be
+called repeatedly to receive the input.
+</p>
+
+<p>
+I tried a quick-and-dirty implementation:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">my-eshell-to-view-buffer</span> (mode)
+  (<span class="org-keyword">lexical-let</span> ((my-buffer (get-buffer-create <span class="org-string">"*viewer*"</span>)))
+    (<span class="org-keyword">with-current-buffer</span> my-buffer
+      (view-mode 0)
+      (end-of-buffer)
+      (<span class="org-keyword">when</span> (eq mode 'overwrite)
+        (erase-buffer)))
+    (<span class="org-keyword">lambda</span> (string)
+      (<span class="org-keyword">with-current-buffer</span> my-buffer
+        (view-mode 0)
+        (<span class="org-keyword">save-excursion</span>
+          (end-of-buffer)
+          (insert string))
+        (view-mode t)
+        (switch-to-buffer my-buffer)))))
+</pre>
+</div>
+
+<p>
+Now, doing something like <code>ls -al &gt; /dev/view</code> in eshell results in
+another emacs buffer being opened, displayed in view-mode and showing the
+text being piped in. Which is just like the more or less commands: you can scroll,
+search and <code>q</code> to return to your eshell.
+</p>
+
+<p>
+The last step is an alias
+</p>
+<div class="org-src-container">
+<pre class="src src-shell"><span class="org-builtin">alias</span> more <span class="org-string">'cat $1 &gt; /dev/view'</span>
+</pre>
+</div>
+<p>
+and that's it! Both
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ more my.txt
+</pre>
+</div>
+<p>
+and
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ ls -al | more
+</pre>
+</div>
+<p>
+just work as
+expected&#x2014;nice! So I'm using the system <code>cat</code> command as a helper
+redirecting pipe'd data into my virtual device.
+Probably this can be used as a template also when
+implementing other lisp commands receiving piped input.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf874147" class="outline-2">
+<h2 id="orgf874147">Piping into eshell</h2>
+<div class="outline-text-2" id="text-orgf874147">
+<p>
+The other way would be piping a region into an eshell pipeline. To do
+this also for non-contiguous regions (like rectangles), I'm using a
+small helper:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">region-string</span> ()
+  (<span class="org-keyword">cl-labels</span>
+       ((nl-string (str)
+          (<span class="org-keyword">if</span> (string-equal (string-chop-newline str) str) (format <span class="org-string">"%s\n"</span> str)
+            str)))
+     (apply #'concat
+            (mapcar
+             (<span class="org-keyword">lambda</span> (region)
+               (nl-string (buffer-substring-no-properties (car region) (cdr region))))
+             (region-bounds)))))
+</pre>
+</div>
+
+<p>
+The rest is easy:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">eshell/region</span> (buffer)
+  (<span class="org-keyword">with-current-buffer</span> buffer (region-string)))
+</pre>
+</div>
+<p>
+This defines a new command <code>region</code>, receiving a buffer as
+argument and outputting it's current region into the shell.
+So,
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ region <span class="org-comment-delimiter">#</span><span class="org-comment">&lt;buffer my-buffer&gt; | grep text</span>
+</pre>
+</div>
+<p>
+would output the current region of
+my-buffer, filtered by the grep argument (a silly example, as
+you would do the filtering directly in that buffer..). But you get the
+point.
+</p>
+
+<p>
+A complete roundtrip of input and output pipes would be like preparing a buffer with shell commands,
+selecting some of them and then calling
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">$ region <span class="org-string">"shell-commands"</span> | sh | more
+</pre>
+</div>
+<p>
+Of course, something
+similar could be done by just pressing
+ <code>C-u M-|</code> in the first buffer. But again, you get the
+point.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Jörg Kollmann(<a href='https://mastodon.social/@joergkb'>@joergkb</a>)</p> | <p>Made on emacs org-mode with <a href="https://jessekelly881-rethink.surge.sh/">Rethink</a></p>
+</div>
+</body>
+</html>
