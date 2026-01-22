@@ -36,7 +36,7 @@ so frequently that I've defined a shortcut:
   (dired
    (if (null arg) "." arg)))
 #+end_src
-After using this, ~q~ brings you back to the eshell buffer.
+After using these commands, ~q~ conveniently brings you back to your eshell buffer.
 
 Eshell has some unusual redirection functions for stdout,
 like sending it to a buffer (~ls > #<buffer name>~) or to the emacs
@@ -52,10 +52,12 @@ $ switch-to-buffer #<buffer orgs>
 And instead of calling ~emacsclient my-file~, you can use the emacs
 command ~find-file my-file~ (or like ~find-file-other-window~).
 
-What I also like is being able to directly use all editing features in
-the eshell buffer, or in other buffers. I'm trying to get to a workflow
-having shorter command outputs directly in the shell output while sending
-longer outputs to dedicated buffers.
+What I also like is being able to directly use all editing features
+inside of
+eshell buffers (or in other buffers); that is, just using the
+eshell buffer as an editable text. I'm trying to get to a workflow
+where I have shorter command outputs directly in the shell output while sending
+longer outputs into their own dedicated buffers.
 
 * Writing pipeline commands for Eshell
 

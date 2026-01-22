@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-01-22 Do. 19:34 -->
+<!-- 2026-01-22 Do. 20:16 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Writing pipeline commands in Eshell</title>
@@ -18,9 +18,9 @@
 <div id="content" class="content">
 <h1 class="title">Writing pipeline commands in Eshell</h1>
 
-<div id="outline-container-orgd9e9f29" class="outline-2">
-<h2 id="orgd9e9f29">Experimenting with Eshell</h2>
-<div class="outline-text-2" id="text-orgd9e9f29">
+<div id="outline-container-org6931207" class="outline-2">
+<h2 id="org6931207">Experimenting with Eshell</h2>
+<div class="outline-text-2" id="text-org6931207">
 <p>
 Over the holydays I finally took some time experimenting
 with <code>eshell</code>, an interesting shell implementation for emacs.
@@ -58,7 +58,7 @@ so frequently that I've defined a shortcut:
 </pre>
 </div>
 <p>
-After using this, <code>q</code> brings you back to the eshell buffer.
+After using these commands, <code>q</code> conveniently brings you back to your eshell buffer.
 </p>
 
 <p>
@@ -81,17 +81,19 @@ command <code>find-file my-file</code> (or like <code>find-file-other-window</co
 </p>
 
 <p>
-What I also like is being able to directly use all editing features in
-the eshell buffer, or in other buffers. I'm trying to get to a workflow
-having shorter command outputs directly in the shell output while sending
-longer outputs to dedicated buffers.
+What I also like is being able to directly use all editing features
+inside of
+eshell buffers (or in other buffers); that is, just using the
+eshell buffer as an editable text. I'm trying to get to a workflow
+where I have shorter command outputs directly in the shell output while sending
+longer outputs into their own dedicated buffers.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org6ee0c68" class="outline-2">
-<h2 id="org6ee0c68">Writing pipeline commands for Eshell</h2>
-<div class="outline-text-2" id="text-org6ee0c68">
+<div id="outline-container-org482645b" class="outline-2">
+<h2 id="org482645b">Writing pipeline commands for Eshell</h2>
+<div class="outline-text-2" id="text-org482645b">
 <p>
 For this, I want to have a function sending output to a buffer and setting that
 buffer to <code>view-mode</code>.
@@ -180,9 +182,9 @@ implementing other lisp commands receiving piped input.
 </div>
 </div>
 
-<div id="outline-container-orgf874147" class="outline-2">
-<h2 id="orgf874147">Piping into eshell</h2>
-<div class="outline-text-2" id="text-orgf874147">
+<div id="outline-container-org73d548a" class="outline-2">
+<h2 id="org73d548a">Piping into eshell</h2>
+<div class="outline-text-2" id="text-org73d548a">
 <p>
 The other way would be piping a region into an eshell pipeline. To do
 this also for non-contiguous regions (like rectangles), I'm using a
