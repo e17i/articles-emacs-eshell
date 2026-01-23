@@ -13,7 +13,7 @@
 
 Over the holydays I finally took some time experimenting
 with ~eshell~, an interesting shell implementation for emacs.
-What I love most is having shell commands and lisp code together in
+What I love most about it is having shell commands and lisp code together in
 one place. That can be a real game-changer.
 Instead of calling ~ielm~, just use eshell for
 defining and calling lisp functions. And then using them in
@@ -28,9 +28,9 @@ or just
 #+begin_src shell
 $ magit
 #+end_src
-in the
+from
 current directory is really convenient. In fact, I'm using ~dired~
-so frequently that I've defined a shortcut:
+so frequently that I've defined a shortcut called ~els~:
 #+begin_src emacs-lisp
 (defun eshell/els (&optional arg)
   (dired
@@ -49,15 +49,16 @@ $ ls -l | grep org > #<buffer orgs>
 $ (with-current-buffer (get-buffer "orgs") (dired-virtual (eshell/pwd)))
 $ switch-to-buffer #<buffer orgs>
 #+end_src
-And instead of calling ~emacsclient my-file~, you can use the emacs
-command ~find-file my-file~ (or like ~find-file-other-window~).
+And instead of calling ~emacsclient~ /my-file/, you can use the emacs
+command ~find-file~ /my-file/ (or something like ~find-file-other-window~).
 
-What I also like is being able to directly use all editing features
+What I also like is being able to directly use all different editing features
 inside of
 eshell buffers (or in other buffers); that is, just using the
 eshell buffer as an editable text. I'm trying to get to a workflow
 where I have shorter command outputs directly in the shell output while sending
-longer outputs into their own dedicated buffers.
+longer outputs into their own dedicated buffers, possibly displaying
+them in a second window.
 
 * Writing pipeline commands for Eshell
 
@@ -102,7 +103,7 @@ I tried a quick-and-dirty implementation:
 #+end_src
 
 Now, doing something like ~ls -al > /dev/view~ in eshell results in
-another emacs buffer being opened, displayed in view-mode and showing the
+another emacs buffer being displayed in view-mode and showing the
 text being piped in. Which is just like the more or less commands: you can scroll,
 search and =q= to return to your eshell.
 
@@ -120,8 +121,8 @@ $ ls -al | more
 #+end_src
 just work as
 expected---nice! So I'm using the system ~cat~ command as a helper
-redirecting pipe'd data into my virtual device.
-Probably this can be used as a template also when
+redirecting piped data into my virtual device.
+Probably this can also be used as a template when
 implementing other lisp commands receiving piped input.
 
 * Piping into eshell
