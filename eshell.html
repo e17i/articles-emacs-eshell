@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-01-23 Fr. 10:18 -->
+<!-- 2026-02-24 Di. 11:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Writing pipeline commands in Eshell</title>
@@ -18,9 +18,9 @@
 <div id="content" class="content">
 <h1 class="title">Writing pipeline commands in Eshell</h1>
 
-<div id="outline-container-org13758cf" class="outline-2">
-<h2 id="org13758cf">Experimenting with Eshell</h2>
-<div class="outline-text-2" id="text-org13758cf">
+<div id="outline-container-org08d9d20" class="outline-2">
+<h2 id="org08d9d20">Experimenting with Eshell</h2>
+<div class="outline-text-2" id="text-org08d9d20">
 <p>
 Over the holydays I finally took some time experimenting
 with <code>eshell</code>, an interesting shell implementation for emacs.
@@ -92,9 +92,9 @@ them in a second window.
 </div>
 </div>
 
-<div id="outline-container-org20b25f8" class="outline-2">
-<h2 id="org20b25f8">Writing pipeline commands for Eshell</h2>
-<div class="outline-text-2" id="text-org20b25f8">
+<div id="outline-container-orgce30bf5" class="outline-2">
+<h2 id="orgce30bf5">Writing pipeline commands for Eshell</h2>
+<div class="outline-text-2" id="text-orgce30bf5">
 <p>
 For this, I want to have a function sending output to a buffer and setting that
 buffer to <code>view-mode</code>.
@@ -128,7 +128,7 @@ I tried a quick-and-dirty implementation:
 </p>
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span class="org-keyword">defun</span> <span class="org-function-name">my-eshell-to-view-buffer</span> (mode)
-  (<span class="org-keyword">lexical-let</span> ((my-buffer (get-buffer-create <span class="org-string">"*viewer*"</span>)))
+  (<span class="org-keyword">let</span> ((my-buffer (get-buffer-create <span class="org-string">"*viewer*"</span>)))
     (<span class="org-keyword">with-current-buffer</span> my-buffer
       (view-mode 0)
       (end-of-buffer)
@@ -139,8 +139,9 @@ I tried a quick-and-dirty implementation:
         (view-mode 0)
         (<span class="org-keyword">save-excursion</span>
           (end-of-buffer)
-          (insert string))
-        (view-mode t)
+          (<span class="org-keyword">if</span> (char-or-string-p string)
+              (insert string)))
+        (view-mode 1)
         (switch-to-buffer my-buffer)))))
 </pre>
 </div>
@@ -183,9 +184,9 @@ implementing other lisp commands receiving piped input.
 </div>
 </div>
 
-<div id="outline-container-org41d1808" class="outline-2">
-<h2 id="org41d1808">Piping into eshell</h2>
-<div class="outline-text-2" id="text-org41d1808">
+<div id="outline-container-org18e3cf8" class="outline-2">
+<h2 id="org18e3cf8">Piping into eshell</h2>
+<div class="outline-text-2" id="text-org18e3cf8">
 <p>
 The other way would be piping a region into an eshell pipeline. To do
 this also for non-contiguous regions (like rectangles), I'm using a

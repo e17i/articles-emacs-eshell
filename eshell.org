@@ -84,9 +84,9 @@ function given here. It receives an argument giving the mode
 called repeatedly to receive the input.
 
 I tried a quick-and-dirty implementation:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :lexical t :results none
 (defun my-eshell-to-view-buffer (mode)
-  (lexical-let ((my-buffer (get-buffer-create "*viewer*")))
+  (let ((my-buffer (get-buffer-create "*viewer*")))
     (with-current-buffer my-buffer
       (view-mode 0)
       (end-of-buffer)
@@ -97,8 +97,9 @@ I tried a quick-and-dirty implementation:
         (view-mode 0)
         (save-excursion
           (end-of-buffer)
-          (insert string))
-        (view-mode t)
+          (if (char-or-string-p string)
+              (insert string)))
+        (view-mode 1)
         (switch-to-buffer my-buffer)))))
 #+end_src
 
